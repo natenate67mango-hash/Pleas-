@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SearchX Browser</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{--bg:#0f0f13;--sur:#1a1a24;--sur2:#22222f;--bdr:#2e2e42;--acc:#6c63ff;--acc2:#ff6584;--txt:#e8e8f0;--mut:#7a7a99;}
+  html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);overflow:hidden;}
+  #browser{display:flex;flex-direction:column;height:100vh;width:100vw;}
+  /* TABS */
+  #tab-bar{display:flex;align-items:flex-end;background:#0a0a0e;padding:5px 8px 0;gap:2px;min-height:38px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;}
+  #tab-bar::-webkit-scrollbar{display:none;}
+  .tab{display:flex;align-items:center;gap:5px;padding:0 10px;height:32px;background:var(--sur);border-radius:7px 7px 0 0;cursor:pointer;font-size:11px;color:var(--mut);white-space:nowrap;max-width:160px;min-width:90px;border:1px solid transparent;border-bottom:none;flex-shrink:0;transition:all .1s;}
+  .tab.active{background:var(--sur2);color:var(--txt);border-color:var(--bdr);}
+  .tab-ic{font-size:12px;flex-shrink:0;}.tab-ti{flex:1;overflow:hidden;text-overflow:ellipsis;}
+  .tab-x{width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--mut);flex-shrink:0;}
+  .tab-x:hover{background:rgba(255,255,255,.15);color:#fff;}
+  #ntab{width:28px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px 6px 0 0;cursor:pointer;color:var(--mut);font-size:16px;flex-shrink:0;}
+  #ntab:hover{background:var(--sur);color:var(--txt);}
+  /* NAV */
+  #nav{display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--sur2);border-bottom:1px solid var(--bdr);flex-shrink:0;}
+  .nb{width:30px;height:30px;border-radius:7px;border:none;background:transparent;color:var(--mut);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .1s;flex-shrink:0;}
+  .nb:hover:not(:disabled){background:var(--bdr);color:var(--txt);}.nb:disabled{opacity:.3;cursor:default;}
+  #uw{flex:1;display:flex;align-items:center;background:var(--bg);border:1.5px solid var(--bdr);border-radius:20px;padding:0 12px;height:34px;gap:7px;transition:all .15s;}
+  #uw:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px rgba(108,99,255,.2);}
+  #lk{font-size:11px;color:#4caf50;flex-shrink:0;}
+  #ui{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:13px;font-family:'Inter',sans-serif;}
+  #ui::placeholder{color:var(--mut);}
+  #spin{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:background .2s;}
+  #spin.on{background:var(--acc);animation:pl .8s infinite;}
+  @keyframes pl{0%,100%{opacity:1;}50%{opacity:.3;}}
+  #gb{background:var(--acc);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  #gb:hover{background:#7c74ff;}
+  /* PROGRESS */
+  #prog{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--acc),var(--acc2));z-index:9999;transition:width .2s;display:none;border-radius:0 1px 1px 0;}
+  /* BOOKMARKS */
+  #bmbar{display:flex;align-items:center;gap:3px;padding:3px 8px;background:var(--sur);border-bottom:1px solid var(--bdr);overflow-x:auto;scrollbar-width:none;min-height:28px;flex-shrink:0;}
+  #bmbar::-webkit-scrollbar{display:none;}
+  .bm{display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:5px;font-size:11px;cursor:pointer;color:var(--mut);white-space:nowrap;flex-shrink:0;transition:all .1s;}
+  .bm:hover{background:var(--bdr);color:var(--txt);}
+  /* CONTENT */
+  #content{flex:1;position:relative;overflow:hidden;}
+  /* HOME */
+  #home{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;overflow-y:auto;padding:36px 16px 30px;background:var(--bg);}
+  #home.gone{display:none;}
+  .logo{font-size:36px;font-weight:700;letter-spacing:-1px;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;}
+  .tag{font-size:12px;color:var(--mut);margin-bottom:22px;}
+  #hsw{width:min(520px,100%);display:flex;align-items:center;background:var(--sur);border:1.5px solid var(--bdr);border-radius:26px;padding:0 15px;height:46px;gap:8px;margin-bottom:16px;transition:all .15s;}
+  #hsw:focus-within{border-color:var(--acc);box-shadow:0 0 0 4px rgba(108,99,255,.2);}
+  #hs{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:15px;font-family:'Inter',sans-serif;}
+  #hs::placeholder{color:var(--mut);}
+  #hgo{background:var(--acc);border:none;border-radius:20px;padding:7px 18px;color:#fff;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;}
+  #hgo:hover{background:#7c74ff;}
+  .er{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:min(520px,100%);margin-bottom:8px;}
+  .ep{padding:5px 12px;border-radius:16px;border:1.5px solid var(--bdr);background:transparent;color:var(--mut);font-size:11px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;}
+  .ep:hover,.ep.on{border-color:var(--acc);background:rgba(108,99,255,.15);color:var(--txt);}
+  .note{font-size:10px;color:var(--mut);margin-bottom:18px;}
+  .qg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:min(520px,100%);margin-bottom:20px;}
+  .ql{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 8px;background:var(--sur);border:1px solid var(--bdr);border-radius:12px;cursor:pointer;transition:all .15s;}
+  .ql:hover{background:var(--sur2);border-color:var(--acc);transform:translateY(-1px);}
+  .qi{font-size:20px;}.ql{font-size:10px;color:var(--mut);text-align:center;}
+  .sec{width:min(520px,100%);margin-bottom:14px;}
+  .sh{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--mut);margin-bottom:7px;}
+  .ri{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:13px;transition:background .1s;}
+  .ri:hover{background:var(--sur);}
+  .re{font-size:10px;color:var(--mut);background:var(--sur);padding:2px 6px;border-radius:6px;margin-left:auto;}
+  .rd{font-size:10px;color:var(--mut);padding:2px 5px;border-radius:4px;}
+  .rd:hover{background:rgba(255,80,80,.2);color:#f88;}
+  /* FRAME */
+  #fw{position:absolute;inset:0;display:none;flex-direction:column;}
+  #fw.show{display:flex;}
+  #sf{flex:1;border:none;width:100%;background:#fff;}
+  /* BLOCKED */
+  #bp{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);text-align:center;padding:30px;gap:12px;}
+  #bp.show{display:flex;}
+  .bi{font-size:50px;}.bt{font-size:19px;font-weight:600;}
+  .bm2{font-size:13px;color:var(--mut);max-width:360px;line-height:1.6;}
+  .bbs{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-top:6px;}
+  .bb{padding:9px 20px;border-radius:20px;border:none;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;}
+  .bb.p{background:var(--acc);color:#fff;}.bb.p:hover{background:#7c74ff;}
+  .bb.s{background:var(--sur);color:var(--txt);border:1px solid var(--bdr);}.bb.s:hover{background:var(--sur2);}
+  /* AUTOCOMPLETE */
+  #ac{position:fixed;background:var(--sur2);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;z-index:9998;box-shadow:0 8px 28px rgba(0,0,0,.6);display:none;}
+  .ai{display:flex;align-items:center;gap:9px;padding:9px 13px;font-size:13px;cursor:pointer;transition:background .1s;}
+  .ai:hover,.ai.f{background:var(--bdr);}
+  .aic{color:var(--mut);font-size:12px;width:14px;text-align:center;}
+  ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:3px;}
+</style>
+</head>
+<body>
+<div id="browser">
+<div id="prog"></div>
+
+<!-- TABS -->
+<div id="tab-bar">
+  <div class="tab active" id="t0" onclick="sw(0)">
+    <span class="tab-ic">🏠</span><span class="tab-ti" id="tt0">New Tab</span>
+    <span class="tab-x" onclick="ct(event,0)">✕</span>
+  </div>
+  <div id="ntab" onclick="nt()" title="New Tab">+</div>
+</div>
+
+<!-- NAV -->
+<div id="nav">
+  <button class="nb" id="bb" onclick="bk()" disabled>‹</button>
+  <button class="nb" id="bf" onclick="fw()" disabled>›</button>
+  <button class="nb" id="br" onclick="rl()">↻</button>
+  <button class="nb" onclick="gh()">⌂</button>
+  <div id="uw">
+    <span id="lk">🔒</span>
+    <input id="ui" type="text" placeholder="Search or type any URL..."
+      autocomplete="off" spellcheck="false"
+      onkeydown="uk(event)" oninput="sac(this.value)"
+      onfocus="this.select();sac(this.value)" onblur="hac()">
+    <div id="spin"></div>
+    <button id="gb" onclick="nav()">→</button>
+  </div>
+  <button class="nb" onclick="ont()" title="Open in new tab" style="font-size:13px;">↗</button>
+  <button class="nb" onclick="ts()">⋮</button>
+</div>
+
+<!-- BOOKMARKS -->
+<div id="bmbar">
+  <div class="bm" onclick="go('https://duckduckgo.com')">🦆 DuckDuckGo</div>
+  <div class="bm" onclick="go('https://en.wikipedia.org')">📖 Wikipedia</div>
+  <div class="bm" onclick="go('https://www.reddit.com')">🤖 Reddit</div>
+  <div class="bm" onclick="go('https://github.com')">💻 GitHub</div>
+  <div class="bm" onclick="go('https://news.ycombinator.com')">🔶 HackerNews</div>
+  <div class="bm" onclick="go('https://www.bbc.com/news')">📰 BBC News</div>
+  <div class="bm" onclick="go('https://www.imdb.com')">🎬 IMDB</div>
+  <div class="bm" onclick="go('https://archive.org')">📦 Archive</div>
+  <div class="bm" onclick="go('https://www.wolframalpha.com')">🧮 Wolfram</div>
+  <div class="bm" onclick="go('https://translate.google.com')">🌍 Translate</div>
+</div>
+
+<!-- CONTENT -->
+<div id="content">
+
+  <!-- HOME PAGE -->
+  <div id="home">
+    <div class="logo">SearchX</div>
+    <div class="tag">Loads websites right here • Blocked ones open in a new tab</div>
+
+    <div id="hsw">
+      <span style="font-size:16px;">🔍</span>
+      <input id="hs" type="text" placeholder="Search or enter a website address..."
+        autocomplete="off" onkeydown="if(event.key==='Enter')hsr()" autofocus>
+      <button id="hgo" onclick="hsr()">Go</button>
+    </div>
+
+    <div class="er">
+      <button class="ep on" id="ep-ddg"  onclick="se('ddg',this)">🦆 DuckDuckGo</button>
+      <button class="ep"    id="ep-bing" onclick="se('bing',this)">🔵 Bing</button>
+      <button class="ep"    id="ep-wiki" onclick="se('wiki',this)">📖 Wikipedia</button>
+      <button class="ep"    id="ep-g"    onclick="se('g',this)">🌐 Google ↗</button>
+      <button class="ep"    id="ep-yt"   onclick="se('yt',this)">▶ YouTube ↗</button>
+    </div>
+    <div class="note">↗ = opens in new tab (blocks embedding)</div>
+
+    <div class="qg">
+      <div class="ql" onclick="go('https://duckduckgo.com')"><span class="qi">🦆</span><span style="font-size:10px;color:var(--mut)">DuckDuckGo</span></div>
+      <div class="ql" onclick="go('https://en.wikipedia.org')"><span class="qi">📖</span><span style="font-size:10px;color:var(--mut)">Wikipedia</span></div>
+      <div class="ql" onclick="go('https://www.reddit.com')"><span class="qi">🤖</span><span style="font-size:10px;color:var(--mut)">Reddit</span></div>
+      <div class="ql" onclick="go('https://github.com')"><span class="qi">💻</span><span style="font-size:10px;color:var(--mut)">GitHub</span></div>
+      <div class="ql" onclick="go('https://www.bbc.com/news')"><span class="qi">📰</span><span style="font-size:10px;color:var(--mut)">BBC News</span></div>
+      <div class="ql" onclick="go('https://www.imdb.com')"><span class="qi">🎬</span><span style="font-size:10px;color:var(--mut)">IMDB</span></div>
+      <div class="ql" onclick="go('https://news.ycombinator.com')"><span class="qi">🔶</span><span style="font-size:10px;color:var(--mut)">HackerNews</span></div>
+      <div class="ql" onclick="go('https://archive.org')"><span class="qi">📦</span><span style="font-size:10px;color:var(--mut)">Archive.org</span></div>
+    </div>
+
+    <div class="sec">
+      <div class="sh">🕐 History</div>
+      <div id="rl"></div>
+    </div>
+  </div>
+
+  <!-- IFRAME -->
+  <div id="fw">
+    <iframe id="sf" allow="fullscreen; autoplay" onload="fl()" onerror="fbl()"></iframe>
+  </div>
+
+  <!-- BLOCKED PAGE -->
+  <div id="bp">
+    <div class="bi">🚫</div>
+    <div class="bt">This site blocks embedding</div>
+    <div class="bm2" id="bmsg">This website doesn't allow being loaded inside other pages. Tap below to open it normally.</div>
+    <div class="bbs">
+      <button class="bb p" onclick="ob()">Open in New Tab ↗</button>
+      <button class="bb s" onclick="gh()">🏠 Home</button>
+      <button class="bb s" onclick="go('https://duckduckgo.com')">🦆 DuckDuckGo</button>
+    </div>
+  </div>
+
+</div><!-- /content -->
+<div id="ac"></div>
+</div>
+
+<script>
+const ENG={
+  ddg: q=>`https://duckduckgo.com/?q=${E(q)}`,
+  bing:q=>`https://www.bing.com/search?q=${E(q)}`,
+  wiki:q=>`https://en.wikipedia.org/wiki/Special:Search?search=${E(q)}`,
+  g:   q=>`https://www.google.com/search?q=${E(q)}`,
+  yt:  q=>`https://www.youtube.com/results?search_query=${E(q)}`,
+};
+const NEWT=['g','yt'];
+const BLKD=['google.com','youtube.com','facebook.com','instagram.com','twitter.com','x.com','tiktok.com','netflix.com','amazon.com','linkedin.com','whatsapp.com','discord.com','spotify.com','apple.com','microsoft.com','live.com','office.com','twitch.tv','snapchat.com','pinterest.com'];
+function E(q){return encodeURIComponent(q);}
+function blk(url){try{let h=new URL(url).hostname.replace('www.','');return BLKD.some(b=>h===b||h.endsWith('.'+b));}catch(e){return false;}}
+function dom(url){try{return new URL(url).hostname.replace('www.','');}catch(e){return url.slice(0,30);}}
+
+let tabs=[{title:'New Tab',url:'',ic:'🏠'}],atab=0;
+let hist=[[]],hidx=[0];
+let ceng='ddg',rec=[],blkurl='';
+let ptmr=null,piv=null;
+try{rec=JSON.parse(localStorage.getItem('sx3')||'[]');}catch(e){}
+
+// NAVIGATE
+function nav(){
+  let v=document.getElementById('ui').value.trim();
+  if(!v)return; hac();
+  if(/^https?:\/\//i.test(v)) go(v);
+  else if(/^[a-z0-9-]+\.[a-z]{2,}/i.test(v)&&!v.includes(' ')) go('https://'+v);
+  else sr(v);
+}
+function hsr(){
+  let q=document.getElementById('hs').value.trim();
+  if(!q)return;
+  document.getElementById('ui').value=q;
+  sr(q);
+}
+function sr(q){
+  sv(q,ceng);
+  let url=ENG[ceng](q);
+  location.href=url;
+}
+function go(url){
+  if(!url)return;
+  document.getElementById('ui').value=url;
+  ph(url);
+  if(blk(url)){sb(url);return;}
+  sl(true);
+  ss('frame');
+  let f=document.getElementById('sf');
+  clearTimeout(ptmr);
+  f.src=url;
+  ul(url);
+  sv(url,'visit');
+  setTabI(atab,'Loading…','⏳');
+  // timeout fallback
+  ptmr=setTimeout(()=>{sl(false);},10000);
+}
+function fl(){
+  clearTimeout(ptmr);sl(false);
+  let f=document.getElementById('sf'),url=document.getElementById('ui').value;
+  let t='';
+  try{t=f.contentDocument?.title||'';}catch(e){}
+  setTabI(atab,t||dom(url),'🌐');
+  ul(url);
+}
+function fbl(){clearTimeout(ptmr);sl(false);sb(document.getElementById('ui').value);}
+function sb(url){
+  blkurl=url;
+  document.getElementById('bmsg').textContent=`"${dom(url)}" blocks being loaded inside other pages. This is a security rule by the site itself — not something we can change. Tap below to open it normally.`;
+  ss('blocked');setTabI(atab,'Blocked','🚫');sl(false);
+}
+function ob(){if(blkurl)window.open(blkurl,'_blank');}
+function ont(){let u=document.getElementById('ui').value;if(u)window.open(u,'_blank');}
+
+// STATES
+function ss(s){
+  document.getElementById('home').classList.toggle('gone',s!=='home');
+  document.getElementById('fw').className=s==='frame'?'show':'';
+  document.getElementById('bp').className=s==='blocked'?'show':'';
+  if(s!=='frame')document.getElementById('sf').src='about:blank';
+}
+function gh(){ss('home');document.getElementById('ui').value='';document.getElementById('hs').value='';setTabI(atab,'New Tab','🏠');sl(false);clearTimeout(ptmr);}
+
+// LOADING
+function sl(on){
+  document.getElementById('spin').className=on?'on':'';
+  let b=document.getElementById('prog');
+  if(on){
+    b.style.display='block';let w=0;b.style.width='0%';
+    clearInterval(piv);piv=setInterval(()=>{w+=Math.random()*12;if(w>88)w=88;b.style.width=w+'%';},180);
+  }else{
+    clearInterval(piv);b.style.width='100%';
+    setTimeout(()=>{b.style.display='none';b.style.width='0%';},300);
+  }
+}
+function ul(url){
+  let l=document.getElementById('lk');
+  l.textContent=url.startsWith('https')?'🔒':'⚠️';
+  l.style.color=url.startsWith('https')?'#4caf50':'#ff9800';
+}
+
+// TABS
+function nt(){tabs.push({title:'New Tab',url:'',ic:'🏠'});hist.push([]);hidx.push(0);rt();sw(tabs.length-1);gh();}
+function ct(e,i){e.stopPropagation();if(tabs.length===1){gh();return;}tabs.splice(i,1);hist.splice(i,1);hidx.splice(i,1);if(atab>=tabs.length)atab=tabs.length-1;rt();sw(atab);}
+function sw(i){atab=i;rt();document.getElementById('ui').value=tabs[i].url||'';unb();if(!tabs[i].url)gh();}
+function rt(){
+  let bar=document.getElementById('tab-bar'),nb=document.getElementById('ntab');
+  document.querySelectorAll('.tab').forEach(t=>t.remove());
+  tabs.forEach((t,i)=>{
+    let el=document.createElement('div');
+    el.className='tab'+(i===atab?' active':'');
+    el.innerHTML=`<span class="tab-ic">${t.ic}</span><span class="tab-ti">${t.title}</span><span class="tab-x" onclick="ct(event,${i})">✕</span>`;
+    el.addEventListener('click',()=>sw(i));
+    bar.insertBefore(el,nb);
+  });
+}
+function setTabI(i,title,ic){if(!tabs[i])return;tabs[i].title=title;tabs[i].ic=ic;rt();}
+
+// HISTORY
+function ph(url){let h=hist[atab];hidx[atab]++;h.splice(hidx[atab]);h.push(url);tabs[atab].url=url;unb();}
+function bk(){let i=hidx[atab];if(i>0){hidx[atab]--;go(hist[atab][hidx[atab]]);unb();}}
+function fw(){let h=hist[atab],i=hidx[atab];if(i<h.length-1){hidx[atab]++;go(h[hidx[atab]]);unb();}}
+function rl(){let u=document.getElementById('ui').value;if(u&&u!=='about:blank')go(u);}
+function unb(){let i=hidx[atab],h=hist[atab];document.getElementById('bb').disabled=i<=0;document.getElementById('bf').disabled=i>=h.length-1;}
+
+// ENGINE
+function se(e,el){ceng=e;document.querySelectorAll('.ep').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+
+// RECENT
+function sv(q,eng){rec=rec.filter(r=>r.q!==q);rec.unshift({q,eng});if(rec.length>12)rec.pop();try{localStorage.setItem('sx3',JSON.stringify(rec));}catch(e){}rr();}
+function rr(){
+  let el=document.getElementById('rl');
+  if(!rec.length){el.innerHTML='<div style="font-size:12px;color:var(--mut);padding:6px 10px;">No history yet — start browsing!</div>';return;}
+  el.innerHTML=rec.slice(0,8).map(r=>`
+    <div class="ri" onclick="gr('${r.q.replace(/'/g,"\\'")}','${r.eng}')">
+      <span>${r.eng==='visit'?'🌐':'🔍'}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;">${r.q}</span>
+      <span class="re">${r.eng==='visit'?dom(r.q):r.eng}</span>
+      <span class="rd" onclick="dr(event,'${r.q.replace(/'/g,"\\'")}')">✕</span>
+    </div>`).join('');
+}
+function gr(q,eng){if(eng==='visit')go(q);else{document.getElementById('hs').value=q;ceng=eng;hsr();}}
+function dr(e,q){e.stopPropagation();rec=rec.filter(r=>r.q!==q);try{localStorage.setItem('sx3',JSON.stringify(rec));}catch(e){}rr();}
+
+// AUTOCOMPLETE
+const SG=['how to make money','how to lose weight','how to code in python','what is ai','what is quantum computing','wikipedia free encyclopedia','duckduckgo private search','reddit front page','github open source','bbc breaking news','imdb top movies','hacker news tech','archive.org wayback','wolfram alpha math','online calculator free','weather forecast today','translate text online','pdf tools free','speed test internet','free games online','minecraft wiki','roblox games','best vpn 2025','chatgpt ai','how to make pasta','how to draw','science news today'];
+let aci=-
